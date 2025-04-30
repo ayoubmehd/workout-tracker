@@ -25,3 +25,16 @@ export const posts = createTable(
   }),
   (t) => [index("name_idx").on(t.name)]
 );
+
+export const exercises = createTable(
+  "exercise",
+  (d) => ({
+    id: d.varchar({ length: 36 }).primaryKey(),
+    name: d.varchar({ length: 256 }).notNull(),
+    muscleGroup: d.varchar({ length: 64 }).notNull(),
+    description: d.text().notNull(),
+    tutorialUrl: d.varchar({ length: 512 }),
+    imageUrl: d.varchar({ length: 512 }),
+  }),
+  (t) => [index("muscle_group_idx").on(t.muscleGroup)]
+);
