@@ -1,13 +1,7 @@
 // Types for the workout tracker app
+import { exercises } from "~/server/db/schema";
 
-export interface Exercise {
-  id: string;
-  name: string;
-  muscleGroup: MuscleGroup;
-  description: string;
-  tutorialUrl: string;
-  imageUrl: string;
-}
+export type Exercise = typeof exercises.$inferSelect;
 
 export interface WorkoutExercise extends Exercise {
   sets: number;

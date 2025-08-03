@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useState } from 'react';
-import { exercises } from '~/data/exerciseData';
 import ExerciseCard from '../_components/ExerciseCard';
 import type { MuscleGroup, Exercise } from '~/types';
 import { Search, Filter } from 'lucide-react';
+import { api } from '~/trpc/react';
 
 const Library: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<MuscleGroup | 'all'>('all');
+
+  const { data: exercises = [] } = api.exercise.getAll.useQuery();
   
   // Get all unique muscle groups
   const muscleGroups = Array.from(new Set(exercises.map(ex => ex.muscleGroup)));
@@ -23,7 +25,7 @@ const Library: React.FC = () => {
   });
   
   // Group exercises by muscle group for the "all" view
-  const groupedExercises: Record<MuscleGroup, Exercise[]> = {} as Record<MuscleGroup, Exercise[]>;
+  const groupedExercises = {} as Record<string, Exercise[]>;
   
   if (selectedMuscleGroup === 'all') {
     muscleGroups.forEach(group => {
@@ -82,13 +84,13 @@ const Library: React.FC = () => {
         <>
           {muscleGroups.map(group => {
             // Skip empty groups
-            if (groupedExercises[group].length === 0) return null;
+            if (groupedExercises[group]?.length === 0) return null;
             
             return (
               <div key={group} className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-800 mb-4 capitalize">{group}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {groupedExercises[group].map(exercise => (
+                  {groupedExercises[group]?.map(exercise => (
                     <ExerciseCard 
                       key={exercise.id} 
                       exercise={exercise}

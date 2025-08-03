@@ -263,7 +263,7 @@ const ActiveWorkout: React.FC = () => {
             </div>
             <div>
               <a 
-                href={currentExercise.tutorialUrl} 
+                href={currentExercise.tutorialUrl || undefined} 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="bg-red-500 text-white p-2 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
