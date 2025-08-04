@@ -5,9 +5,10 @@ import WorkoutCard, { CompletedWorkoutCard } from '~/app/_components/WorkoutCard
 import type { Workout, CompletedWorkout } from '~/types';
 import { Plus, Calendar, Activity, ArrowRight } from 'lucide-react';
 import { useRouter } from "next/navigation"
+import { api } from '~/trpc/react';
 
 const Dashboard: React.FC = () => {
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const { data: workouts = [] } = api.workout.getAll.useQuery();
   const [completedWorkouts, setCompletedWorkouts] = useState<CompletedWorkout[]>([]);
   const router = useRouter();
 
@@ -17,7 +18,6 @@ const Dashboard: React.FC = () => {
   const handleDeleteWorkout = (id: string) => {
     if (window.confirm('Are you sure you want to delete this workout?')) {
       deleteWorkout(id);
-      setWorkouts(workouts.filter(workout => workout.id !== id));
     }
   };
   

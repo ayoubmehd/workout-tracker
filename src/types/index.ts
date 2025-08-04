@@ -1,5 +1,5 @@
 // Types for the workout tracker app
-import { exercises } from "~/server/db/schema";
+import { exercises, workouts } from "~/server/db/schema";
 
 export type Exercise = typeof exercises.$inferSelect;
 
@@ -11,13 +11,11 @@ export interface WorkoutExercise extends Exercise {
   restTime: number; // in seconds
 }
 
-export interface Workout {
-  id: string;
-  name: string;
-  description: string;
-  exercises: WorkoutExercise[];
-  createdAt: Date;
-  lastPerformed?: Date;
+export type Workout = typeof workouts.$inferSelect & {
+  exercises?: Exercise[];
+};
+
+export interface CreateWorkout extends Omit<Workout, 'id'> {
 }
 
 export interface CompletedWorkout extends Workout {

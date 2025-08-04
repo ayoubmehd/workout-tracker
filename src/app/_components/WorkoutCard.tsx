@@ -25,8 +25,8 @@ const getRelativeTime = (date: Date) => {
 
 const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onStart, onEdit, onDelete }) => {
   // Calculate total exercises and unique muscle groups
-  const totalExercises = workout.exercises.length;
-  const muscleGroups = [...new Set(workout.exercises.map(ex => ex.muscleGroup))];
+  const totalExercises = workout.exercises?.length;
+  const muscleGroups = [...new Set(workout.exercises?.map(ex => ex.muscleGroup))];
   
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform hover:scale-[1.01]">
@@ -76,10 +76,10 @@ const WorkoutCard: React.FC<WorkoutCardProps> = ({ workout, onStart, onEdit, onD
             <span>Created {getRelativeTime(workout.createdAt)}</span>
           </div>
           
-          {workout.lastPerformed && (
+          {workout.updatedAt && (
             <div className="flex items-center">
               <Clock size={16} className="mr-1" />
-              <span>Last done {getRelativeTime(workout.lastPerformed)}</span>
+              <span>Last done {getRelativeTime(workout.updatedAt)}</span>
             </div>
           )}
         </div>
