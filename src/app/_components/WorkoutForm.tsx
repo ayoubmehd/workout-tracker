@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import type {
   CreateWorkout,
   Exercise,
@@ -16,13 +16,18 @@ import { Search, X, Save, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "~/trpc/react";
 
-const WorkoutForm = ({ id }: { id?: string }) => {
+
+const WorkoutForm = ({ workout, workoutExercises }: { workout?: Workout, workoutExercises?: WorkoutExercise[] }) => {
   const router = useRouter();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
+  const id = workout?.id;
+  const [name, setName] = useState(workout?.name);
+  const [description, setDescription] = useState(workout?.description || '');
   const [selectedExercises, setSelectedExercises] = useState<WorkoutExercise[]>(
-    [],
+    workoutExercises || [],
   );
+
+  const existingExercises = useMemo(() => new Set(workoutExercises?.map(item => item.id)), [workoutExercises]);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [showExerciseForm, setShowExerciseForm] = useState(false);
   const [currentExercise, setCurrentExercise] = useState<Exercise | null>(null);
@@ -30,6 +35,7 @@ const WorkoutForm = ({ id }: { id?: string }) => {
     number | null
   >(null);
   const { mutate: saveWorkout } = api.workout.create.useMutation();
+  const { mutate: updateWorkout } = api.workout.update.useMutation();
 
   const navigate = (path: string) => router.push(path);
 
@@ -45,8 +51,6 @@ const WorkoutForm = ({ id }: { id?: string }) => {
     setCurrentExercise(exercise);
     setShowExerciseForm(true);
   };
-
-  const updateWorkout = (workout: Workout) => {};
 
   const handleSaveExercise = (workoutExercise: WorkoutExercise) => {
     if (editingExerciseIndex !== null) {
@@ -77,7 +81,7 @@ const WorkoutForm = ({ id }: { id?: string }) => {
   };
 
   const handleSaveWorkout = () => {
-    if (!name.trim()) {
+    if (!name?.trim()) {
       alert("Please enter a workout name");
       return;
     }
@@ -88,25 +92,43 @@ const WorkoutForm = ({ id }: { id?: string }) => {
     }
 
     if (id) {
+      const newExercises = selectedExercises.filter(item => !existingExercises.has(item.id))
+        .map((item) => ({
+          ...item,
+          exerciseId: item.id,
+          sets: item.sets || undefined,
+          reps: item.reps || undefined,
+        }));
+      
+
+      const isInSelectedExercises = (id: string) => !!selectedExercises.find(x => x.id === id)
+
+      let exercisesToDelete: string[] = [];
+      if (workoutExercises?.length) {
+        exercisesToDelete = workoutExercises.filter(item => !isInSelectedExercises(item.id)).map(item => item.id);
+      }
+      console.log("exercisesToDelete: ", exercisesToDelete)
       updateWorkout({
         id,
         name,
         description,
-        exercises: selectedExercises,
-        updatedAt: new Date(),
+        exercises: newExercises,
+        exercisesToDelete,
       });
     } else {
       saveWorkout({
         name,
         description,
         exercises: selectedExercises.map((item) => ({
-          exerciseId: item.id,
           ...item,
+          exerciseId: item.id,
+          sets: item.sets || undefined,
+          reps: item.reps || undefined,
         })),
       });
     }
 
-    navigate("/");
+    // navigate("/");
   };
 
   return (
@@ -262,9 +284,9 @@ const WorkoutForm = ({ id }: { id?: string }) => {
       <div className="mb-8 flex justify-end">
         <button
           onClick={handleSaveWorkout}
-          disabled={!name.trim() || selectedExercises.length === 0}
+          disabled={!name?.trim() || selectedExercises.length === 0}
           className={`flex items-center rounded-md px-6 py-2 text-white ${
-            !name.trim() || selectedExercises.length === 0
+            !name?.trim() || selectedExercises.length === 0
               ? "cursor-not-allowed bg-gray-400"
               : "bg-emerald-500 hover:bg-emerald-600"
           }`}

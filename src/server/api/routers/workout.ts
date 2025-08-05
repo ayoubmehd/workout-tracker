@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 import { workouts, workoutExercises, exercises } from "~/server/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 export const workoutRouter = createTRPCRouter({
   // Get all workouts
@@ -17,16 +17,27 @@ export const workoutRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const workout = await ctx.db.query.workouts.findFirst({
         where: eq(workouts.id, input.id),
-        with: {
-          workoutExercises: {
-            with: {
-              exercise: true,
-            },
-          },
-        },
       });
 
       return workout;
+    }),
+  
+
+  getExercisesByWorkoutId: publicProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const exercisesData = await ctx.db.select({
+        id: exercises.id,
+        name: exercises.name,
+        muscleGroup: exercises.muscleGroup,
+        description: exercises.description,
+        tutorialUrl: exercises.tutorialUrl,
+        imageUrl: exercises.imageUrl,
+        sets: workoutExercises.sets,
+        reps: workoutExercises.reps,
+        weight: workoutExercises.weight,
+      }).from(exercises).leftJoin(workoutExercises, eq(exercises.id, workoutExercises.exerciseId)).where(eq(workoutExercises.workoutId, input.id));
+      return exercisesData;
     }),
 
   // Create a new workout
@@ -87,6 +98,16 @@ export const workoutRouter = createTRPCRouter({
         description: z.string().optional(),
         duration: z.number().optional(),
         difficulty: z.enum(["beginner", "intermediate", "advanced"]).optional(),
+        exercises: z.array(
+          z.object({
+            exerciseId: z.string(),
+            sets: z.number().min(1).default(3),
+            reps: z.number().min(1).default(10),
+            restTime: z.number().min(0).default(60),
+            order: z.number().min(0).default(0),
+          })
+        ).optional(),
+        exercisesToDelete: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -96,6 +117,32 @@ export const workoutRouter = createTRPCRouter({
         .update(workouts)
         .set(updateData)
         .where(eq(workouts.id, id));
+      
+      // Create workout exercises if provided
+      if (input.exercises?.length) {
+        const workoutExerciseValues = input.exercises.map((exercise, index) => ({
+          id: crypto.randomUUID(),
+          workoutId: id,
+          exerciseId: exercise.exerciseId,
+          sets: exercise.sets,
+          reps: exercise.reps,
+          restTime: exercise.restTime,
+          order: exercise.order || index,
+        }));
+
+        await ctx.db.insert(workoutExercises).values(workoutExerciseValues);
+      }
+
+      if (input.exercisesToDelete?.length) {
+        await ctx.db
+          .delete(workoutExercises)
+          .where(
+            and(
+              inArray(workoutExercises.exerciseId, input.exercisesToDelete),
+              eq(workoutExercises.workoutId, id),
+            ),
+          );
+      }
 
       return { success: true };
     }),

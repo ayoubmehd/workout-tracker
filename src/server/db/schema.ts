@@ -64,6 +64,8 @@ export const workoutExercises = createTable(
     exerciseId: d.varchar({ length: 36 }).notNull().references(() => exercises.id, { onDelete: "cascade" }),
     sets: d.integer().notNull().default(3),
     reps: d.integer().notNull().default(10),
+    weight: d.integer().notNull().default(10),
+    unit: d.varchar({ length: 20 }), // kg, lbs
     restTime: d.integer().notNull().default(60), // in seconds
     order: d.integer().notNull().default(0), // for exercise order in workout
   }),
