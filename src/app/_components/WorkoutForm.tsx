@@ -20,7 +20,7 @@ import { api } from "~/trpc/react";
 const WorkoutForm = ({ workout, workoutExercises }: { workout?: Workout, workoutExercises?: WorkoutExercise[] }) => {
   const router = useRouter();
   const id = workout?.id;
-  const [name, setName] = useState(workout?.name);
+  const [name, setName] = useState(workout?.name || '');
   const [description, setDescription] = useState(workout?.description || '');
   const [selectedExercises, setSelectedExercises] = useState<WorkoutExercise[]>(
     workoutExercises || [],
